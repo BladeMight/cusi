@@ -1,0 +1,52 @@
+#!/bin/bash
+dispage=0
+if [[ "$1" == "" ]]; then
+  echo "     cuss v1.0 by BladeMight"
+  echo "$0 <search-query> <page-number> <sort-type>"
+  echo "Page number can be range: 1-3."
+  echo "Sort types:"
+  echo "  0 - Relevance"
+  echo "  1 - Date"
+  echo "  2 - Views"
+  echo "  3 - Comments"
+  echo "  4 - Rating"
+  exit
+fi
+u=$(urlenc "$1")
+p=1
+s=1
+if [[ "$2" != "" ]]; then
+  p=$2
+fi
+if [[ "$3" != "" ]]; then
+  s=$3
+fi
+U="https://video.sibnet.ru/search.php?panel=open&text=$u&sortby=$s&inname=1&rubid=0&userlogin=&duration=0&page="
+shantak() {
+  H1="Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8"
+  H2="Accept-Encoding: utf-8,cp1251"
+  H3="Accept-Language: ru-RU,ru;q=0.9,en-US;q=0.8,en;q=0.7,zh-CN;q=0.6,zh;q=0.5"
+  H4="Connection: keep-alive"
+  H5="Host: video.sibnet.ru"
+  if [[ $dispage -eq 1 ]]; then
+    echo "Page: $1"
+  fi
+  r=$(curl -H"$H1" -H"$H2" -H"$H3" -H"$H4" -H"$H5" -s "$U$1" | iconv -f cp1251 -t utf-8)
+  if [[ "$r" == "" ]]; then
+    echo "Error occured: Empty responce."
+    exit 24
+  fi
+  echo "$r" | grep -Po '<a href="(\/video[0-9]+).+?">.+?(alt|title)="(.+?)"' | perl -pe 's/^<a href="(\/video[0-9]+).+?">.+?(alt|title)="(.+?)"$/\3\nhttps:\/\/video.sibnet.ru\1\//g' | sed 's/&nbsp;/ /g; s/&amp;/\&/g; s/&lt;/\</g; s/&gt;/\>/g; s/&quot;/\"/g; s/#&#39;/\'"'"'/g; s/&ldquo;/\"/g; s/&rdquo;/\"/g;' | sed -re 's/<\/?b>//g'
+}
+if [[ $2 =~ ^[0-9]-[0-9]$ ]]; then
+  dispage=1
+  st="${2%%-*}"
+  en="${2##*-}"
+  echo "Range mode: $st => $en"
+  for i in $(seq $st $en); do 
+    shantak $i
+  done
+else
+  shantak $p
+fi
+

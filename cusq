@@ -1,0 +1,64 @@
+#!/bin/bash
+fqsid="[\s\(\[\{]"
+fqdef="$fqsid\$i$fqsid"
+dbg=0
+if [[ "$1" == "--debug" ]]; then
+  dbg=1
+  shift
+fi
+if [[ "$1" == "" ]]; then
+  echo "     cusq v1.0 by BladeMight"
+  echo "$0 <*Debug> <Query> <*Loop-Max> <*Loop-Start> <*Max-Results> <*Filter-Query>"
+  echo "  * - optional flag"
+  echo "  <Debug>        - If first argument is \"--debug\", script will debug info."
+  echo "  <Query>        - Query to search for."
+  echo "  <Loop-Max>     - Ending point of loop, default: 1."
+  echo "  <Loop-Start>   - Starting point of loop, default: 1"
+  echo "  <Max-Results>  - Maximum results per each query, default: 1, to display only: -1 links, -2 names."
+  echo "  <Filter-Query> - Custom filter query, default: $fqdef, \$i=loop index"
+  echo "Example:"
+  echo "  $0 \"Banana Fish Anidub\" 5 5"
+  exit 0
+fi
+dw() {
+  [[ $dbg -eq 1 ]] && echo -e "$1"
+}
+fq="$fqdef"
+que="$1"
+lma=1
+lst=1
+mar=1
+if [[ "$2" != "" ]]; then lma="$2"; fi
+if [[ "$3" != "" ]]; then lst="$3"; fi
+if [[ "$4" != "" ]]; then mar="$4"; fi
+if [[ "$5" != "" ]]; then fq="$5"; fi
+if [[ $lst -gt $lma ]]; then
+  dw "\e[32mSwapping\e[0m the \e[33mLoop-Max\e[0m and \e[34mLoop-Start\e[0m."
+  ltt=$lst
+  lst=$lma
+  lma=$ltt
+fi
+mrr=$((mar*2))
+if [[ mar -le 0 ]]; then mrr=2; fi
+if [[ mar -eq -2 ]]; then mrr=1; fi
+dw "Queries: search: \"\e[33m$que\e[0m\", filter: \"\e[32m$fq\e[0m\""
+for ((i=$lst; i<=$lma; i++)); do
+  qed=""
+  fqq="${fq/\$i/$i}"
+  for ((p=1; p!=5; p++)); do
+    if [[ $p -ne 1 ]]; then
+      dw "Loading page: \e[33m[$p]\e[0m for \e[32m{LOOP:$i}\e[0m..."
+    fi
+    qed=$(cuss "$que $i" $p | grep -iP -A1 "${fqq}" | head -n$mrr)
+    if [[ "$qed" != "" ]]; then break; fi
+  done
+  if [[ "$qed" != "" ]]; then
+    if [[ $mar -eq -1 ]]; then
+      echo "$qed" | grep -iP "^http"
+    else 
+      echo "$qed"
+    fi
+  else
+    echo "Unfortunately, no results for [$que $i]..."
+  fi
+done
