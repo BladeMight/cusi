@@ -19,6 +19,7 @@ Video-Title: [AnimeDub.ru] Mahou Shoujo Tokushusen Asuka - 08 [720p]
 Accept-URL: https://video.sibnet.ru/v/da96b5847903abe5a45168102be049aa/3560339.mp4
 Direct-URL: https://dv98.sibnet.ru/33/07/34/3307349.mp4?st=_1YRuFUYGucR3tIecVCFNA&e=1551544000&stor=8&noip=1
 ```
+You can use here urls found by `cuss`/`cusq`.
 
 ## cuss
 
