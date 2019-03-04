@@ -1,6 +1,7 @@
 #!/bin/bash
+ver="1.01"
 if [[ "$1" == "" ]]; then
-  echo "     cusi By BladeMight, v1.01"
+  echo "     cusi By BladeMight, v$ver"
   echo "$0 <sibnet-url> <*commands-str>"
   echo "In command str you can use variables:"
   echo " \\\$du = direct url"

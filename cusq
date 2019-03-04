@@ -1,13 +1,15 @@
 #!/bin/bash
-fqsid="[\s\(\[\{]"
-fqdef="$fqsid\$i$fqsid"
+ver="1.04"
+fqsid="(^|[\s\(\[\{])"
+fqeid="([\s\(\[\{]|$)"
+fqdef="$fqsid\$i$fqeid"
 dbg=0
 if [[ "$1" == "--debug" ]]; then
   dbg=1
   shift
 fi
 if [[ "$1" == "" ]]; then
-  echo "     cusq v1.0 by BladeMight"
+  echo "     cusq by BladeMight, v$ver"
   echo "$0 <*Debug> <Query> <*Loop-Max> <*Loop-Start> <*Max-Results> <*Filter-Query>"
   echo "  * - optional flag"
   echo "  <Debug>        - If first argument is \"--debug\", script will debug info."
@@ -50,6 +52,13 @@ for ((i=$lst; i<=$lma; i++)); do
       dw "Loading page: \e[33m[$p]\e[0m for \e[32m{LOOP:$i}\e[0m..."
     fi
     qed=$(cuss "$que $i" $p | grep -iP -A1 "${fqq}" | head -n$mrr)
+    if [[ "$qed" == "" ]]; then 
+      if [[ $i -lt 10 ]] && [[ $i -gt -1 ]]; then
+        fqq="${fq/\$i/0$i}"
+        dw "Using \e[32mzero-prefix\e[0m \e[34mfix\e[0m: \"\e[35m$que 0$i\e[0m\", \"\e[36m$fqq\e[0m\"."
+        qed=$(cuss "$que 0$i" $p | grep -iP -A1 "${fqq}" | head -n$mrr)
+      fi
+    fi
     if [[ "$qed" != "" ]]; then break; fi
   done
   if [[ "$qed" != "" ]]; then
