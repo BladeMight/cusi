@@ -1,5 +1,5 @@
 #!/bin/bash
-ver="1.01"
+ver="1.04"
 if [[ "$1" == "" ]]; then
   echo "     cusi By BladeMight, v$ver"
   echo "$0 <sibnet-url> <*commands-str>"
@@ -14,7 +14,22 @@ if [[ "$1" == "" ]]; then
   echo "  cusi <url> 'ffmpeg -i \"\$du\"'"
   exit 0
 fi
-url="$1"
+DEBUG=0
+if [[ "$1" == "--debug" ]]; then
+  DEBUG=1
+  shift
+fi
+dw() {
+  if [[ $DEBUG -eq 1 ]]; then
+    echo "$1"
+  fi
+}
+ID=$(echo "$1" | perl -lane 'print m/video.sibnet.ru\/(?:(?:shell\.php\?videoid=)|(?:video))(\d+)/g')
+if [[ "$ID" == "" ]]; then
+  echo "Invalid url, please be sure its video.sibnet.ru url."
+  exit -3
+fi
+url="https://video.sibnet.ru/shell.php?videoid=$ID" # Using shell.php may sometimes produce better result.
 H1="Accept-Encoding: utf-8,cp1251"
 H2="Accept-Language: ru-RU,ru;q=0.9,en-US;q=0.8,en;q=0.7,zh-CN;q=0.6,zh;q=0.5"
 H3="User-Agent: Mozilla/5.0 (Linux; Android 4.4.2; Nexus 4 Build/KOT49H) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/34.0.1847.114 Mobile Safari/537.36"
@@ -25,25 +40,34 @@ H7="Range: bytes=0-"
 H8="Referer: $url"
 resp=$(curl -s -H "$H1" -H "$H2" -H "$H3" -H "$H4" -H "$H5" -H "$H6" -H "$H7" "$url" | iconv -f cp1251 -t utf-8 )
 accepturl=$(echo "$resp" | grep -iP '\d+\.mp4' | sed -re 's/.*(\/v\/.*?mp4)", type.*/https:\/\/video.sibnet.ru\1/g')
-id=$(echo "$resp" | grep -i DOCTYPE | sed -re 's/.*php\?videoid=([0-9]*).*/\1/g')
 # echo "$resp" > r # debug
-echo "Video-Id: $id"
 if [[ $url =~ .*\.php\?.+ ]]; then
   title=$(echo "$resp" | grep -iP 'og:title' | grep -oP 'og:title" content="(.+?)"' | sed -re 's/.*?content="(.+)"/\1/g')
 else 
   title=$(echo "$resp" | grep -iP 'videoname' | sed -re 's/.*?videoName.>(.*?)<\/h1>.*/\1/g')
 fi
-echo "Video-Title: $title"
-echo "Accept-URL: $accepturl"
+dw "Video-Title: $title"
+dw "Video-ID: $ID"
+dw "Accept-URL: $accepturl"
 directurl=$(curl -I "$accepturl" -s -H "$H1" -H "$H2" -H "$H3" -H "$H4" -H "$H5" -H "$H6" -H "$H7" -H "$H8" | awk 'BEGIN{IGNORECASE=1} match($0, /location: (.*)/, z) {printf "https:%s", z[1]}')
-echo "Direct-URL: $directurl"
+dw "Direct-URL: $directurl"
 if [[ "$2" != "" ]]; then
-  echo "Eval mode: [$2]"
+  dw "Eval mode: [$2]"
   au="$accepturl"
   du="$directurl"
   ti=$(echo "$title" | sed -re 's/\\|\/|\*|:|\"|<|>|\?|\|//g') # safe title
-  if [[ $2 == '#aria' ]];then
+  if [[ $2 == '#echo' ]]; then
+    echo -e "$du\n$ti.mp4"
+  elif [[ $2 == '#aria' ]]; then
     aria "$du" -o "$ti.mp4"
+  elif [[ $2 == '#alist' ]]; then
+    n="list.aria"
+    if [[ $3 == '-' ]]; then
+      echo -e "$du\n  out=$ti.mp4"
+    else
+      if [[ "$3" != "" ]]; then n="$3"; fi
+      echo -e "$du\n  out=$ti.mp4" >> "$n"
+    fi
   elif [[ $2 == '#ffplay' ]]; then
     ffplay -i "$du"
   else

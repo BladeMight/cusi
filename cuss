@@ -13,6 +13,11 @@ if [[ "$1" == "" ]]; then
   echo "  4 - Rating"
   exit
 fi
+debug=0
+if [[ "$1" == "-d" ]]; then
+  debug=1
+  shift
+fi
 u=$(echo "$1" | iconv -f utf-8 -t cp1251 ) # php -R 'echo urlencode($argn);')
 p=1
 s=1
@@ -33,6 +38,10 @@ shantak() {
     echo "Page: $1 [$U$1]"
   fi
   r=$(curl -H"$H1" -H"$H2" -H"$H3" -H"$H4" -H"$H5" -s "$U$1" | iconv -f cp1251 -t utf-8)
+  if [[ $debug -eq 1 ]]; then
+    echo "Responce of \"$U$1\" saved to: res.html"
+    echo -e "$r" > res.html
+  fi
   if [[ "$r" == "" ]]; then
     echo "Error occured: Empty responce."
     exit 24

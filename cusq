@@ -1,13 +1,13 @@
 #!/bin/bash
 ver="1.04"
-fqsid="(^|[\s\(\[\{])"
-fqeid="([\s\(\[\{]|$)"
+syms="\s\(\[\{\+\-\_\="
+fqsid="(^|[$syms])"
+fqeid="([$syms]|$)"
 fqdef="$fqsid\$i$fqeid"
 dbg=0
-if [[ "$1" == "--debug" ]]; then
-  dbg=1
-  shift
-fi
+zp=0
+if [[ "$1" == "--debug" ]]; then dbg=1; shift; fi
+if [[ "$1" == "--zero" ]]; then zp=1; shift; fi
 if [[ "$1" == "" ]]; then
   echo "     cusq by BladeMight, v$ver"
   echo "$0 <*Debug> <Query> <*Loop-Max> <*Loop-Start> <*Max-Results> <*Filter-Query>"
@@ -51,7 +51,9 @@ for ((i=$lst; i<=$lma; i++)); do
     if [[ $p -ne 1 ]]; then
       dw "Loading page: \e[33m[$p]\e[0m for \e[32m{LOOP:$i}\e[0m..."
     fi
-    qed=$(cuss "$que $i" $p | grep -iP -A1 "${fqq}" | head -n$mrr)
+    if [[ $zp -eq 0 ]]; then
+      qed=$(cuss "$que $i" $p | grep -iP -A1 "${fqq}" | head -n$mrr)
+    fi
     if [[ "$qed" == "" ]]; then 
       if [[ $i -lt 10 ]] && [[ $i -gt -1 ]]; then
         fqq="${fq/\$i/0$i}"
