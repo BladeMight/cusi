@@ -1,8 +1,10 @@
 #!/bin/bash
-ver="1.04"
-syms="\s\(\[\{\+\-\_\="
-fqsid="(^|[$syms])"
-fqeid="([$syms]|$)"
+ver="1.11"
+bsym="\s\=\_\-\+x"
+osym="$bsym\(\[\{"
+csym="$bsym\)\]\}"
+fqsid="(^|[$osym])"
+fqeid="([$csym]|$)"
 fqdef="$fqsid\$i$fqeid"
 dbg=0
 zp=0
@@ -25,6 +27,8 @@ fi
 dw() {
   [[ $dbg -eq 1 ]] && echo -e "$1"
 }
+SU="\e[33mSuccess!\e[0m"
+FA="\e[31mFailed.\e[0m"
 fq="$fqdef"
 que="$1"
 lma=1
@@ -52,16 +56,26 @@ for ((i=$lst; i<=$lma; i++)); do
       dw "Loading page: \e[33m[$p]\e[0m for \e[32m{LOOP:$i}\e[0m..."
     fi
     if [[ $zp -eq 0 ]]; then
+      dw "Using \e[36mBase\e[0m mode..."
       qed=$(cuss "$que $i" $p | grep -iP -A1 "${fqq}" | head -n$mrr)
     fi
-    if [[ "$qed" == "" ]]; then 
+    if [[ "$qed" == "" ]]; then
       if [[ $i -lt 10 ]] && [[ $i -gt -1 ]]; then
+        dw "$FA"
         fqq="${fq/\$i/0$i}"
-        dw "Using \e[32mzero-prefix\e[0m \e[34mfix\e[0m: \"\e[35m$que 0$i\e[0m\", \"\e[36m$fqq\e[0m\"."
+        dw "Using \e[32mLeading-Zero-Fix(zero-prefix)\e[0m \e[34mfix\e[0m: \"\e[35m$que 0$i\e[0m\", \"\e[36m$fqq\e[0m\"."
         qed=$(cuss "$que 0$i" $p | grep -iP -A1 "${fqq}" | head -n$mrr)
       fi
     fi
-    if [[ "$qed" != "" ]]; then break; fi
+    if [[ "$qed" == "" ]]; then
+      dw "$FA"
+      dw "Using \e[35mNO-INDEX\e[0m search mode..."
+      qed=$(cuss "$que" $p | grep -iP -A1 "${fqq}" | head -n$mrr)
+    fi
+    if [[ "$qed" != "" ]]; then 
+      dw "$SU"
+      break
+    fi
   done
   if [[ "$qed" != "" ]]; then
     if [[ $mar -eq -1 ]]; then

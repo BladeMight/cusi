@@ -24,6 +24,27 @@ dw() {
     echo "$1"
   fi
 }
+if [[ $1 =~ .*myvi ]]; then
+  r=$(curl -s -c /tmp/r.cookies "$1")
+  eurl=$(echo "$r" | grep -i -m1 'content="//myvi.ru/player/embed' | sed -re 's@.*"//(.+)".+@\1@g')
+  title=$(echo "$r" | perl -pe 's/\r?\n//g' | perl -pe 's/.*\<title\>.*?\/.*?\/.*\/ (.*?)\<\/title\>.*/$1/g')
+  er=$(curl -s -b /tmp/r.coockies -c /tmp/er.cookies "$eurl")
+  durl=$(echo "$er" | grep -i 'fs' | perl -pe 's/.*?\("v=(.+?)".*/$1/g')
+  aurl=$(node -e "console.log(decodeURIComponent(process.argv[1]))" "$durl" | perl -pe 's/\\u0026/\&/g')
+  #curl "$aurl" -L -s -o /dev/null -I -w %{url_effective} -b /tmp/er.cookies)
+  drurl=$(curl -L -s -b /tmp/er.cookies -o /dev/null -w %{url_effective} -I $aurl)
+  cookies=$(awk 'BEGIN{printf "Cookie: " } NR > 4 {printf "%s=%s; ",$6,$7}' /tmp/er.cookies)
+  dw "Accept-Url: $aurl"
+  dw "Direct-Url: $drurl"
+  dw "Embed-Url: $eurl"
+  dw "Title: $title"
+  dw "Cookies: $cookies"
+  if [[ $2 == '#echo' ]]; then
+    echo -e "$drurl\n$title\n$cookies"
+  fi
+  #rm -f /tmp/er.cookies /tmp/r.cookies
+  exit 2
+fi
 ID=$(echo "$1" | perl -lane 'print m/video.sibnet.ru\/(?:(?:shell\.php\?videoid=)|(?:video))(\d+)/g')
 if [[ "$ID" == "" ]]; then
   echo "Invalid url, please be sure its video.sibnet.ru url."
