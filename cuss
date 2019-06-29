@@ -1,5 +1,5 @@
 #!/bin/bash
-ver="1.071"
+ver="1.094"
 dispage=0
 if [[ "$1" == "" ]]; then
   echo "     cuss by BladeMight, v$ver"
@@ -14,6 +14,11 @@ if [[ "$1" == "" ]]; then
   exit
 fi
 debug=0
+date=0
+if [[ "$1" == "--date" ]]; then
+  date=1
+  shift
+fi
 if [[ "$1" == "-d" ]]; then
   debug=1
   shift
@@ -54,7 +59,30 @@ shantak() {
     echo "Error occured: Empty responce."
     exit 24
   fi
-  echo "$r" | grep -Po '<a href="(\/video[0-9]+).+?">.+?(title)="(.+?)"' | perl -pe 's/^<a href="(\/video[0-9]+).+?">.+?(title)="(.+?)"$/\3\nhttps:\/\/video.sibnet.ru\1\//g' | sed 's/&nbsp;/ /g; s/&amp;/\&/g; s/&lt;/\</g; s/&gt;/\>/g; s/&quot;/\"/g; s/#&#39;/\'"'"'/g; s/&ldquo;/\"/g; s/&rdquo;/\"/g;' | sed -re 's/<\/?b>//g'
+  sear=$(echo "$r" | grep -Po '<a href="(\/video[0-9]+).+?">.+?(title)="(.+?)"' | perl -pe 's/^<a href="(\/video[0-9]+).+?">.+?(title)="(.+?)"$/\3\nhttps:\/\/video.sibnet.ru\1\//g' | sed 's/&nbsp;/ /g; s/&amp;/\&/g; s/&lt;/\</g; s/&gt;/\>/g; s/&quot;/\"/g; s/#&#39;/\'"'"'/g; s/&ldquo;/\"/g; s/&rdquo;/\"/g;' | sed -re 's/<\/?b>//g')
+  if [[ $date -eq 1 ]]; then
+    datr=()
+    while IFS='' read -r datl || [[ -n "$datl" ]]; do
+      datl=$(echo "$datl" | perl -pe 's/\r//g')
+      datr=("${datr[@]}" "$datl")
+    done < <(echo "$r" | perl -ne 'while(/>([0-9]{2}\.[0-9]{2}\.[0-9]{2,4}.+?)</g){ my $a = $1; $a =~ s/\&nbsp;/ /; print "$a\n"; }')
+    c=0
+    co=0
+    while IFS='' read -r seal || [[ -n "$seal" ]]; do
+      if [[ $c -eq 2 ]]; then
+        echo "${datr[$co]}"
+        echo "----"
+        c=0
+        co=$((co+1))
+      fi
+      echo "$seal"
+      c=$((c+1))
+    done < <(echo "$sear")
+    echo "${datr[$co]}"
+    echo "----"
+  else
+    echo $sear
+  fi
 }
 if [[ $2 =~ ^[0-9]-[0-9]$ ]]; then
   dispage=1
