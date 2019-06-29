@@ -1,5 +1,5 @@
 #!/bin/bash
-ver="1.04"
+ver="1.057"
 if [[ "$1" == "" ]]; then
   echo "     cusi By BladeMight, v$ver"
   echo "$0 <sibnet-url> <*commands-str>"
@@ -24,17 +24,30 @@ dw() {
     echo "$1"
   fi
 }
-if [[ $1 =~ .*myvi ]]; then
+if [[ $1 =~ .*(myvi|ourvideo.ru) ]]; then
   r=$(curl -s -c /tmp/r.cookies "$1")
-  eurl=$(echo "$r" | grep -i -m1 'content="//myvi.ru/player/embed' | sed -re 's@.*"//(.+)".+@\1@g')
+  if [[ $1 =~ .*embed/ ]]; then
+    eurl="$1"
+  else
+    eurl=$(echo "$r" | grep -i -m1 'content="//myvi.ru/player/embed' | sed -re 's@.*"//(.+)".+@\1@g')
+  fi
   title=$(echo "$r" | perl -pe 's/\r?\n//g' | perl -pe 's/.*\<title\>.*?\/.*?\/.*\/ (.*?)\<\/title\>.*/$1/g')
   er=$(curl -s -b /tmp/r.coockies -c /tmp/er.cookies "$eurl")
   durl=$(echo "$er" | grep -i 'fs' | perl -pe 's/.*?\("v=(.+?)".*/$1/g')
   aurl=$(node -e "console.log(decodeURIComponent(process.argv[1]))" "$durl" | perl -pe 's/\\u0026/\&/g')
+  if [[ $title =~ DOCTYPE ]]; then
+    dw "Title from durl..."
+    title=$(echo "$durl" | perl -pe 's/.*\\u0026t=(.+?)\\u0026.+/\1/g' | perl -pe 's/\+/ /g')
+    title=$(node -e "console.log(decodeURIComponent(process.argv[1]))" "$title")
+  fi
   #curl "$aurl" -L -s -o /dev/null -I -w %{url_effective} -b /tmp/er.cookies)
-  drurl=$(curl -L -s -b /tmp/er.cookies -o /dev/null -w %{url_effective} -I $aurl)
+  if [[ $aurl =~ .*tp=video ]]; then
+    aurl=$(echo "$aurl" | sed -re 's/(.+?)&tp=video.+/\1/g')
+  fi
+  drurl=$(curl -L -s -b /tmp/er.cookies -o /dev/null -w %{url_effective} -I "$aurl")
   cookies=$(awk 'BEGIN{printf "Cookie: " } NR > 4 {printf "%s=%s; ",$6,$7}' /tmp/er.cookies)
   dw "Accept-Url: $aurl"
+  dw "Escaped-Url: $durl"
   dw "Direct-Url: $drurl"
   dw "Embed-Url: $eurl"
   dw "Title: $title"
@@ -42,35 +55,37 @@ if [[ $1 =~ .*myvi ]]; then
   if [[ $2 == '#echo' ]]; then
     echo -e "$drurl\n$title\n$cookies"
   fi
+  directurl="$drurl"
+  accepturl="$aurl"
   #rm -f /tmp/er.cookies /tmp/r.cookies
-  exit 2
-fi
-ID=$(echo "$1" | perl -lane 'print m/video.sibnet.ru\/(?:(?:shell\.php\?videoid=)|(?:video))(\d+)/g')
-if [[ "$ID" == "" ]]; then
-  echo "Invalid url, please be sure its video.sibnet.ru url."
-  exit -3
-fi
-url="https://video.sibnet.ru/shell.php?videoid=$ID" # Using shell.php may sometimes produce better result.
-H1="Accept-Encoding: utf-8,cp1251"
-H2="Accept-Language: ru-RU,ru;q=0.9,en-US;q=0.8,en;q=0.7,zh-CN;q=0.6,zh;q=0.5"
-H3="User-Agent: Mozilla/5.0 (Linux; Android 4.4.2; Nexus 4 Build/KOT49H) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/34.0.1847.114 Mobile Safari/537.36"
-H4="chrome-proxy: frfr"
-H5="Accept: */*"
-H6="Connection: keep-alive"
-H7="Range: bytes=0-"
-H8="Referer: $url"
-resp=$(curl -s -H "$H1" -H "$H2" -H "$H3" -H "$H4" -H "$H5" -H "$H6" -H "$H7" "$url" | iconv -f cp1251 -t utf-8 )
-accepturl=$(echo "$resp" | grep -iP '\d+\.mp4' | sed -re 's/.*(\/v\/.*?mp4)", type.*/https:\/\/video.sibnet.ru\1/g')
-# echo "$resp" > r # debug
-if [[ $url =~ .*\.php\?.+ ]]; then
-  title=$(echo "$resp" | grep -iP 'og:title' | grep -oP 'og:title" content="(.+?)"' | sed -re 's/.*?content="(.+)"/\1/g')
-else 
-  title=$(echo "$resp" | grep -iP 'videoname' | sed -re 's/.*?videoName.>(.*?)<\/h1>.*/\1/g')
-fi
-dw "Video-Title: $title"
-dw "Video-ID: $ID"
-dw "Accept-URL: $accepturl"
-directurl=$(curl -I "$accepturl" -s -H "$H1" -H "$H2" -H "$H3" -H "$H4" -H "$H5" -H "$H6" -H "$H7" -H "$H8" | awk 'BEGIN{IGNORECASE=1} match($0, /location: (.*)/, z) {printf "https:%s", z[1]}')
+else
+  ID=$(echo "$1" | perl -lane 'print m/video.sibnet.ru\/(?:(?:shell\.php\?videoid=)|(?:video))(\d+)/g')
+  if [[ "$ID" == "" ]]; then
+    echo "Invalid url, please be sure its video.sibnet.ru url."
+    exit -3
+  fi
+  url="https://video.sibnet.ru/shell.php?videoid=$ID" # Using shell.php may sometimes produce better result.
+  H1="Accept-Encoding: utf-8,cp1251"
+  H2="Accept-Language: ru-RU,ru;q=0.9,en-US;q=0.8,en;q=0.7,zh-CN;q=0.6,zh;q=0.5"
+  H3="User-Agent: Mozilla/5.0 (Linux; Android 4.4.2; Nexus 4 Build/KOT49H) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/34.0.1847.114 Mobile Safari/537.36"
+  H4="chrome-proxy: frfr"
+  H5="Accept: */*"
+  H6="Connection: keep-alive"
+  H7="Range: bytes=0-"
+  H8="Referer: $url"
+  resp=$(curl -s -H "$H1" -H "$H2" -H "$H3" -H "$H4" -H "$H5" -H "$H6" -H "$H7" "$url" | iconv -f cp1251 -t utf-8 )
+  accepturl=$(echo "$resp" | grep -iP '\d+\.mp4' | sed -re 's/.*(\/v\/.*?mp4)", type.*/https:\/\/video.sibnet.ru\1/g')
+  # echo "$resp" > r # debug
+  if [[ $url =~ .*\.php\?.+ ]]; then
+    title=$(echo "$resp" | grep -iP 'og:title' | grep -oP 'og:title" content="(.+?)"' | sed -re 's/.*?content="(.+)"/\1/g')
+  else 
+    title=$(echo "$resp" | grep -iP 'videoname' | sed -re 's/.*?videoName.>(.*?)<\/h1>.*/\1/g')
+  fi
+  dw "Video-Title: $title"
+  dw "Video-ID: $ID"
+  dw "Accept-URL: $accepturl"
+  directurl=$(curl -I "$accepturl" -s -H "$H1" -H "$H2" -H "$H3" -H "$H4" -H "$H5" -H "$H6" -H "$H7" -H "$H8" | awk 'BEGIN{IGNORECASE=1} match($0, /location: (.*)/, z) {printf "https:%s", z[1]}')
+  fi
 dw "Direct-URL: $directurl"
 if [[ "$2" != "" ]]; then
   dw "Eval mode: [$2]"
@@ -80,17 +95,32 @@ if [[ "$2" != "" ]]; then
   if [[ $2 == '#echo' ]]; then
     echo -e "$du\n$ti.mp4"
   elif [[ $2 == '#aria' ]]; then
-    aria "$du" -o "$ti.mp4"
+    if [[ "$cookies" != "" ]]; then
+      aria --header="$cookies" "$du" -o "$ti.mp4"
+    else
+      aria "$du" -o "$ti.mp4"
+    fi
   elif [[ $2 == '#alist' ]]; then
     n="list.aria"
     if [[ $3 == '-' ]]; then
       echo -e "$du\n  out=$ti.mp4"
+      if [[ "$cookies" != "" ]]; then
+        echo -e "  header=$cookies"
+      fi
     else
       if [[ "$3" != "" ]]; then n="$3"; fi
       echo -e "$du\n  out=$ti.mp4" >> "$n"
+      if [[ "$cookies" != "" ]]; then
+        echo -e "  header=$cookies" >> "$n"
+      fi
+
     fi
   elif [[ $2 == '#ffplay' ]]; then
-    ffplay -i "$du"
+    if [[ "$cookies" != "" ]]; then
+      ffplay -headers "$cookies" -i "$du"
+    else
+      ffplay -i "$du"
+    fi
   else
     eval $2
   fi
