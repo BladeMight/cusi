@@ -1,5 +1,5 @@
 #!/bin/bash
-ver="1.094"
+ver="1.095"
 dispage=0
 if [[ "$1" == "" ]]; then
   echo "     cuss by BladeMight, v$ver"
@@ -81,7 +81,7 @@ shantak() {
     echo "${datr[$co]}"
     echo "----"
   else
-    echo $sear
+    echo "$sear"
   fi
 }
 if [[ $2 =~ ^[0-9]-[0-9]$ ]]; then
