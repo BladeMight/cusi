@@ -14,7 +14,7 @@ if [[ "$1" == "--zero" ]]; then zp=1; shift; fi
 if [[ "$1" == "--cache" ]]; then cmode=1; shift; fi
 if [[ "$1" == "" ]]; then
   echo "     cusq by BladeMight, v$ver"
-  echo "$0 <*Debug> <Query> <*Loop-Max> <*Loop-Start> <*Max-Results> <*Filter-Query>"
+  echo "$0 <*Debug> <*ZeroPrefix> <*Cache> <Query> <*Loop-Max> <*Loop-Start> <*Max-Results> <*Filter-Query>"
   echo "  * - optional flag"
   echo "  <Debug>        - If first argument is \"--debug\", script will debug info."
   echo "  <ZeroPrefix>   - If first argument is \"--zero\", script will force zero-prefix(otherwise it will automatically will be used when needed)."
@@ -61,20 +61,21 @@ for ((i=$lst; i<=$lma; i++)); do
       dw "Loading page: \e[33m[$p]\e[0m for \e[32m{LOOP:$i}\e[0m..."
     fi
     if [[ $cmode -eq 1 ]]; then
+      cfqq="$fqq"
       dw "Using \e[31mCache\e[0m mode..."
       if [[ $zp -eq 1 ]]; then
         dw "And zero-prefix..."
-        fqq="${fq/\$i/0$i}"
+        cfqq="${fq/\$i/0$i}"
       fi
       if [[ "$cache" == "" ]]; then
         cache=$(cuss "$que")
       fi
-      qed=$(echo "$cache" | grep -iP -A1 "${fqq}" | head -n$mrr)
+      qed=$(echo "$cache" | grep -iP -A1 "${cfqq}" | head -n$mrr)
       if [[ "$qed" == "" ]]; then
         dw "$FA"
         dw "Retry with: zero-prefix..."
-        fqq="${fq/\$i/0$i}"
-        qed=$(echo "$cache" | grep -iP -A1 "${fqq}" | head -n$mrr)
+        cfqq="${fq/\$i/0$i}"
+        qed=$(echo "$cache" | grep -iP -A1 "${cfqq}" | head -n$mrr)
         if [[ "$qed" == "" ]]; then dw "$FA"; else dw "$SU"; break; fi
       else
         dw "$SU"
