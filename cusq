@@ -1,5 +1,5 @@
 #!/bin/bash
-ver="1.21"
+ver="1.22"
 bsym="\s\=\_\-\+x"
 osym="$bsym\(\[\{"
 csym="$bsym\)\]\}"
@@ -16,7 +16,7 @@ if [[ "$1" == "--cache" ]]; then cmode=1; shift; fi
 if [[ "$1" == "--force-cache" ]]; then fc=1; cmode=1; shift; fi
 if [[ "$1" == "" ]]; then
   echo "     cusq by BladeMight, v$ver"
-  echo "$0 <*Debug> <*ZeroPrefix> <*Cache> <Query> <*Loop-Max> <*Loop-Start> <*Max-Results> <*Filter-Query>"
+  echo "$0 <*Debug> <*ZeroPrefix> <*Cache> <Query> <*Loop-Max> <*Loop-Start> <*Max-Results> <*Filter-Query> <*Max-Pages>"
   echo "  * - optional flag"
   echo "  <Debug>        - If first argument is \"--debug\", script will debug info."
   echo "  <ZeroPrefix>   - If first argument is \"--zero\", script will force zero-prefix(otherwise it will automatically will be used when needed)."
@@ -40,11 +40,13 @@ fq="$fqdef"
 que="$1"
 lma=1
 lst=1
+pma=5
 mar=1
 if [[ "$2" != "" ]]; then lma="$2"; fi
 if [[ "$3" != "" ]]; then lst="$3"; fi
 if [[ "$4" != "" ]]; then mar="$4"; fi
 if [[ "$5" != "" ]]; then fq="$5"; fi
+if [[ "$6" != "" ]]; then pma="$6"; fi
 if [[ $lst -gt $lma ]]; then
   dw "\e[32mSwapping\e[0m the \e[33mLoop-Max\e[0m and \e[34mLoop-Start\e[0m."
   ltt=$lst
@@ -61,7 +63,7 @@ ok=0
 for ((i=$lst; i<=$lma; i++)); do
   qed=""
   fqq="${fq/\$i/$i}"
-  for ((p=1; p!=5; p++)); do
+  for ((p=1; p!=$pma; p++)); do
     if [[ $p -ne 1 ]]; then
       dw "Loading page: \e[33m[$p]\e[0m for \e[32m{LOOP:$i}\e[0m..."
     fi
@@ -75,7 +77,7 @@ for ((i=$lst; i<=$lma; i++)); do
       if [[ "$cache" == "" ]] || [[ $p -ne $pl ]] && [[ $ok -eq 0 ]]; then
         dw "Cache update: +page$p"
         cachep=$(cuss "$que" $p)
-        cache="$cache\n$cachep"
+        cache="$cache$cachep"
       fi
       qed=$(echo "$cache" | grep -iP -A1 "${cfqq}" | head -n$mrr)
       if [[ "$qed" == "" ]]; then
