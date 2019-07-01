@@ -1,5 +1,5 @@
 #!/bin/bash
-ver="1.14"
+ver="1.15"
 bsym="\s\=\_\-\+x"
 osym="$bsym\(\[\{"
 csym="$bsym\)\]\}"
@@ -17,6 +17,8 @@ if [[ "$1" == "" ]]; then
   echo "$0 <*Debug> <Query> <*Loop-Max> <*Loop-Start> <*Max-Results> <*Filter-Query>"
   echo "  * - optional flag"
   echo "  <Debug>        - If first argument is \"--debug\", script will debug info."
+  echo "  <ZeroPrefix>   - If first argument is \"--zero\", script will force zero-prefix(otherwise it will automatically will be used when needed)."
+  echo "  <Cache>        - If first argument is \"--cache\", script will try to get results faster by loading less pages."
   echo "  <Query>        - Query to search for."
   echo "  <Loop-Max>     - Ending point of loop, default: 1."
   echo "  <Loop-Start>   - Starting point of loop, default: 1"
