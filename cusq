@@ -1,5 +1,5 @@
 #!/bin/bash
-ver="1.15"
+ver="1.21"
 bsym="\s\=\_\-\+x"
 osym="$bsym\(\[\{"
 csym="$bsym\)\]\}"
@@ -9,9 +9,11 @@ fqdef="$fqsid\$i$fqeid"
 dbg=0
 zp=0
 cmode=0
+fc=0
 if [[ "$1" == "--debug" ]]; then dbg=1; shift; fi
 if [[ "$1" == "--zero" ]]; then zp=1; shift; fi
 if [[ "$1" == "--cache" ]]; then cmode=1; shift; fi
+if [[ "$1" == "--force-cache" ]]; then fc=1; cmode=1; shift; fi
 if [[ "$1" == "" ]]; then
   echo "     cusq by BladeMight, v$ver"
   echo "$0 <*Debug> <*ZeroPrefix> <*Cache> <Query> <*Loop-Max> <*Loop-Start> <*Max-Results> <*Filter-Query>"
@@ -19,6 +21,7 @@ if [[ "$1" == "" ]]; then
   echo "  <Debug>        - If first argument is \"--debug\", script will debug info."
   echo "  <ZeroPrefix>   - If first argument is \"--zero\", script will force zero-prefix(otherwise it will automatically will be used when needed)."
   echo "  <Cache>        - If first argument is \"--cache\", script will try to get results faster by loading less pages."
+  echo "  <ForceCache>        - If first argument is \"--force-cache\", script will try to get results faster by loading less pages using ONLY the cache mode."
   echo "  <Query>        - Query to search for."
   echo "  <Loop-Max>     - Ending point of loop, default: 1."
   echo "  <Loop-Start>   - Starting point of loop, default: 1"
@@ -53,6 +56,8 @@ if [[ mar -le 0 ]]; then mrr=2; fi
 if [[ mar -eq -2 ]]; then mrr=1; fi
 dw "Queries: search: \"\e[33m$que\e[0m\", filter: \"\e[32m$fq\e[0m\""
 cache=""
+pl=0
+ok=0
 for ((i=$lst; i<=$lma; i++)); do
   qed=""
   fqq="${fq/\$i/$i}"
@@ -67,20 +72,30 @@ for ((i=$lst; i<=$lma; i++)); do
         dw "And zero-prefix..."
         cfqq="${fq/\$i/0$i}"
       fi
-      if [[ "$cache" == "" ]]; then
-        cache=$(cuss "$que")
+      if [[ "$cache" == "" ]] || [[ $p -ne $pl ]] && [[ $ok -eq 0 ]]; then
+        dw "Cache update: +page$p"
+        cachep=$(cuss "$que" $p)
+        cache="$cache\n$cachep"
       fi
       qed=$(echo "$cache" | grep -iP -A1 "${cfqq}" | head -n$mrr)
       if [[ "$qed" == "" ]]; then
         dw "$FA"
-        dw "Retry with: zero-prefix..."
-        cfqq="${fq/\$i/0$i}"
-        qed=$(echo "$cache" | grep -iP -A1 "${cfqq}" | head -n$mrr)
-        if [[ "$qed" == "" ]]; then dw "$FA"; else dw "$SU"; break; fi
+        if [[ $zp -eq 0 ]]; then
+          dw "Retry with: zero-prefix..."
+          cfqq="${fq/\$i/0$i}"
+          qed=$(echo "$cache" | grep -iP -A1 "${cfqq}" | head -n$mrr)
+          if [[ "$qed" == "" ]]; then dw "$FA"; else dw "$SU"; break; fi
+        fi
+        if [[ "$qed" == "" ]]; then ok=0; fi
       else
         dw "$SU"
+        ok=1
         break
       fi
+    fi
+    if [[ $fc -eq 1 ]]; then
+      dw "skip: $p: forced cache mode"
+      continue
     fi
     if [[ $zp -eq 0 ]]; then
       dw "Using \e[36mBase\e[0m mode..."
@@ -103,6 +118,7 @@ for ((i=$lst; i<=$lma; i++)); do
       dw "$SU"
       break
     fi
+    pl=$p
   done
   if [[ "$qed" != "" ]]; then
     if [[ $mar -eq -1 ]]; then
