@@ -1,5 +1,5 @@
 #!/bin/bash
-ver="1.22"
+ver="1.24"
 bsym="\s\=\_\-\+x"
 osym="$bsym\(\[\{"
 csym="$bsym\)\]\}"
@@ -10,10 +10,12 @@ dbg=0
 zp=0
 cmode=0
 fc=0
+myvi=""
 if [[ "$1" == "--debug" ]]; then dbg=1; shift; fi
 if [[ "$1" == "--zero" ]]; then zp=1; shift; fi
 if [[ "$1" == "--cache" ]]; then cmode=1; shift; fi
 if [[ "$1" == "--force-cache" ]]; then fc=1; cmode=1; shift; fi
+if [[ "$1" == "--myvi" ]]; then myvi="$1"; shift; fi
 if [[ "$1" == "" ]]; then
   echo "     cusq by BladeMight, v$ver"
   echo "$0 <*Debug> <*ZeroPrefix> <*Cache> <Query> <*Loop-Max> <*Loop-Start> <*Max-Results> <*Filter-Query> <*Max-Pages>"
@@ -22,6 +24,7 @@ if [[ "$1" == "" ]]; then
   echo "  <ZeroPrefix>   - If first argument is \"--zero\", script will force zero-prefix(otherwise it will automatically will be used when needed)."
   echo "  <Cache>        - If first argument is \"--cache\", script will try to get results faster by loading less pages."
   echo "  <ForceCache>        - If first argument is \"--force-cache\", script will try to get results faster by loading less pages using ONLY the cache mode."
+  echo "  <Myvi>        - If first argument is \"--myvi\", script will pass --myvi to cuss."
   echo "  <Query>        - Query to search for."
   echo "  <Loop-Max>     - Ending point of loop, default: 1."
   echo "  <Loop-Start>   - Starting point of loop, default: 1"
@@ -76,7 +79,7 @@ for ((i=$lst; i<=$lma; i++)); do
       fi
       if [[ "$cache" == "" ]] || [[ $p -ne $pl ]] && [[ $ok -eq 0 ]]; then
         dw "Cache update: +page$p"
-        cachep=$(cuss "$que" $p)
+        cachep=$(cuss $myvi "$que" $p)
         cache="$cache$cachep"
       fi
       qed=$(echo "$cache" | grep -iP -A1 "${cfqq}" | head -n$mrr)
@@ -101,20 +104,20 @@ for ((i=$lst; i<=$lma; i++)); do
     fi
     if [[ $zp -eq 0 ]]; then
       dw "Using \e[36mBase\e[0m mode..."
-      qed=$(cuss "$que $i" $p | grep -iP -A1 "${fqq}" | head -n$mrr)
+      qed=$(cuss $myvi "$que $i" $p | grep -iP -A1 "${fqq}" | head -n$mrr)
     fi
     if [[ "$qed" == "" ]]; then
       if [[ $i -lt 10 ]] && [[ $i -gt -1 ]]; then
         dw "$FA"
         fqq="${fq/\$i/0$i}"
         dw "Using \e[32mLeading-Zero-Fix(zero-prefix)\e[0m \e[34mfix\e[0m: \"\e[35m$que 0$i\e[0m\", \"\e[36m$fqq\e[0m\"."
-        qed=$(cuss "$que 0$i" $p | grep -iP -A1 "${fqq}" | head -n$mrr)
+        qed=$(cuss $myvi "$que 0$i" $p | grep -iP -A1 "${fqq}" | head -n$mrr)
       fi
     fi
     if [[ "$qed" == "" ]]; then
       dw "$FA"
       dw "Using \e[35mNO-INDEX\e[0m search mode..."
-      qed=$(cuss "$que" $p | grep -iP -A1 "${fqq}" | head -n$mrr)
+      qed=$(cuss $myvi "$que" $p | grep -iP -A1 "${fqq}" | head -n$mrr)
     fi
     if [[ "$qed" != "" ]]; then 
       dw "$SU"
