@@ -89,7 +89,7 @@ for ((i=$lst; i<=$lma; i++)); do
           dw "Retry with: zero-prefix..."
           cfqq="${fq/\$i/0$i}"
           qed=$(echo "$cache" | grep -iP -A1 "${cfqq}" | head -n$mrr)
-          if [[ "$qed" == "" ]]; then dw "$FA"; else dw "$SU"; break; fi
+          if [[ "$qed" == "" ]]; then dw "$FA"; else dw "$SU"; ok=1; break; fi
         fi
         if [[ "$qed" == "" ]]; then ok=0; fi
       else

@@ -37,7 +37,7 @@ if [[ "$3" != "" ]]; then
   s=$3
 fi
 #echo "$p + $u"
-myU="https://www.myvi.ru/search?on_header=true&category=18&detail_search=false&text=$ur&page="
+myU="http://www.myvi.ru/search?on_header=true&category=18&detail_search=true&text=$ur&page="
 U="https://video.sibnet.ru/search.php?panel=open&text=$u&sortby=$s&inname=1&rubid=0&userlogin=&duration=0&page="
 shantak() {
   H1="Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8"
@@ -46,13 +46,15 @@ shantak() {
   H3="Accept-Language: ru-RU,ru;q=0.9,en-US;q=0.8,en;q=0.7,zh-CN;q=0.6,zh;q=0.5"
   H4="Connection: keep-alive"
   H5="Host: video.sibnet.ru"
+  H6='User-Agent: Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/74.0.3729.169 Safari/537.36'
+  C3='Cookie: ASP.NET_SessionId=p5shnm3vlrbppqxuf2jl2yfb; cf_clearance=6954bb4c95046ae895aff099b0167fc24a07e240-1568460168-1800-250'
   if [[ $dispage -eq 1 ]]; then
     echo "Page: $1 [$U$1]"
   fi
   if [[ $myvi -eq 0 ]]; then
     r=$(curl -H"$H1" -H"$H2" -H"$H3" -H"$H4" -H"$H5" -s "$U$1" --compressed | iconv -f cp1251 -t utf-8)
   else
-    r=$(curl -s --compressed "$myU$1")
+    r=$(curl -s -H "$C3" -c /tmp/mv.ck -b /tmp/mv.ck -H"$H6" --compressed "$myU$1")
   fi
   if [[ $debug -eq 1 ]]; then
     echo "Responce saved to: res.html"
