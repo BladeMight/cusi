@@ -46,7 +46,7 @@ function init_ch($u, $o = null) {
   curl_setopt($ch, CURLOPT_ACCEPT_ENCODING, "utf-8,cp1251");
   curl_setopt($ch, CURLOPT_RETURNTRANSFER, TRUE);
   curl_setopt($ch, CURLOPT_TIMEOUT, 5);
-  if ($o != null && $o != "HDR") {
+  if ($o != null) {
     curl_setopt_array($ch, $o);
   }
   return $ch;
@@ -67,7 +67,7 @@ function headers($raw) {
   $f = 0;
   foreach($lines as $line) {
     if ($f == 0) {
-      // print("STATUS\n");
+      dw("STATUS LINE: $line");
       $f = 1;
       $headers["STATUS"] = explode(" ", $line, 3);
       continue;
@@ -75,7 +75,7 @@ function headers($raw) {
     if ($line == null || trim($line[0]) == "") {
       continue;
     }
-    // print("LINE: $line\n");
+    dw("Header-Line: $line");
     list($k, $v) = explode(":", $line, 2);
     $xk = ucfirst(strtolower($k));
     if (!array_key_exists($xk, $headers)) {
@@ -86,6 +86,11 @@ function headers($raw) {
     }
   }
   return $headers;
+}
+function tocookies($setcookies) {
+  $m = preg_replace('/(expires|path|domain|SameSite)=.*?;|\shttponly(;|\s|$)|\spath=[^;]*;?/i', '', $setcookies);
+  $n = preg_replace('/;\s+/', '; ', $m);
+  return $n;
 }
 // main use
 $url = $argv[$i];
@@ -115,27 +120,25 @@ if (sizeof($iurl) >= 2) {
     dw("Not embed-url, try to get...");
     $myvh = get_data($url, Array(CURLOPT_HEADER => TRUE, CURLOPT_NOBODY => TRUE));
     $hed = headers($myvh);
-    $cookies = "cookie: " .$hed["Set-cookie"];
-    print $cookies;
-    // get Unique User Id cookie
-    $myvh = get_data($url, Array(CURLOPT_HEADER => TRUE, CURLOPT_NOBODY => TRUE, CURLOPT_HTTPHEADER => array($cookies)));
-    $hed = headers($myvh);
-    print($hed["Set-cookie"]);
-    print("\nNext not implemented...\n");
-    exit(1);
-    $myvdata = get_data($url);
+    $cookies = tocookies($hed["Set-cookie"]);
+    print "$cookies\n";
+    $myvdata = get_data($url, Array(CURLOPT_HTTPHEADER => array("Cookie:".$cookies)));
     #$cookies = "Cookie: ".str_replace("Set-Cookie: ", "", $myvhed[4]. "; ".$myvhed[7]);
     // print($myvdata);
     preg_match('/content="(\/\/myvi.ru\/player\/embed.*?)"/m', $myvdata, $myve);
     $e_url = "https:".$myve[1];
-    $myvedata = get_data($e_url, Array(CURLOPT_HEADER => TRUE));
+    // get Unique User Id cookie
+    $myvh2 = get_data($e_url, Array(CURLOPT_HEADER => TRUE, CURLOPT_NOBODY => TRUE, CURLOPT_HTTPHEADER => array("Cookie:".$cookies)));
+    $hed2 = headers($myvh2);
+    $cookies = $cookies . " " . tocookies($hed2["Set-cookie"]);
+    $myvedata = get_data($e_url, Array(CURLOPT_COOKIE => $cookies));
     preg_match('/<title\>(.*?)\<\/title\>/m', $myvedata, $ttg);
     $title = $ttg[1];
     // print($title);
     preg_match('/.*?\("v=(.+?)".*/m', $myvedata, $ddg);
-    $durl = str_replace('\u0026', "&", urldecode($ddg[1]));
-    $myvhed = get_data($url, Array(CURLOPT_REFERER => $e_url, CURLOPT_HEADER => TRUE, CURLOPT_NOBODY => TRUE));
-    print_r($myvhed);
+    $aurl = explode("&tp=", str_replace('\u0026', "&", urldecode($ddg[1])))[0];
+    $myvhed = get_data($aurl, Array(CURLOPT_REFERER => $e_url, CURLOPT_HEADER => TRUE, CURLOPT_NOBODY => TRUE, CURLOPT_HTTPHEADER => array("Cookie:".$cookies)));
+    $durl = headers($myvhed)["Location"];
   }
 
 }
