@@ -151,4 +151,10 @@ dw("Accept-URL: $aurl");
 if ($cookies != "") {
   dw("Cookies: $cookies");
 }
-
+if ($argc > $i+1) {
+  $cstr = $argv[$i+1];
+  dw("Command str parse: $cstr");
+  if ($cstr == "#echo") {
+    print "$title\n$durl\n";
+  }
+}
