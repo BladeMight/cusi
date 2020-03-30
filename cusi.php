@@ -123,7 +123,7 @@ if (sizeof($iurl) >= 2) {
     $myvh = get_data($url, Array(CURLOPT_HEADER => TRUE, CURLOPT_NOBODY => TRUE));
     $hed = headers($myvh);
     $cookies = tocookies($hed["Set-cookie"]);
-    print "$cookies\n";
+    dw("cookie1: $cookies");
     $myvdata = get_data($url, Array(CURLOPT_HTTPHEADER => array("Cookie:".$cookies)));
     #$cookies = "Cookie: ".str_replace("Set-Cookie: ", "", $myvhed[4]. "; ".$myvhed[7]);
     // print($myvdata);
@@ -133,6 +133,7 @@ if (sizeof($iurl) >= 2) {
     $myvh2 = get_data($e_url, Array(CURLOPT_HEADER => TRUE, CURLOPT_NOBODY => TRUE, CURLOPT_HTTPHEADER => array("Cookie:".$cookies)));
     $hed2 = headers($myvh2);
     $cookies = $cookies . " " . tocookies($hed2["Set-cookie"]);
+    dw("cookie2: $cookies");
     $myvedata = get_data($e_url, Array(CURLOPT_COOKIE => $cookies));
     preg_match('/<title\>(.*?)\<\/title\>/m', $myvedata, $ttg);
     $title = $ttg[1];
