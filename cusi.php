@@ -1,22 +1,28 @@
+#!/usr/bin/env php
 <?php
-
 // info variables
 $N = "cusi-php";
-$ver = "1.0";
+$ver = "1.014";
 // print help
 function help() {
   global $N, $ver;
   echo "     $N By BladeMight, v$ver\n";
   echo "$N <sibnet-url> <*commands-str>\n";
+  echo "  --debug = print additiona info\n";
   echo "In command str you can use variables:\n";
-  echo " \\\$du = direct url\n";
-  echo " \\\$ti = title\n";
-  echo " \\\$id = id\n";
-  echo " \\\$au = accept url\n";
+  echo "  \$du = direct url\n";
+  echo "  \$ti = title\n";
+  echo "  \$id = id\n";
+  echo "  \$au = accept url\n";
   echo "You must escape variables, so they can be processed in code!, Or you can use single quotes ''\n";
-  echo "command str examples:\n";
-  echo "  cusi <url> 'aria2c \"\$du\" -o \"\$ti\"'\n";
-  echo "  cusi <url> 'ffmpeg -i \"\$du\"'\n";
+  echo "Command-str examples:\n";
+  echo "  $N <url> 'aria2c \"\$du\" -o \"\$ti\"'\n";
+  echo "  $N <url> 'ffmpeg -i \"\$du\"'\n";
+  echo "Command-str shortcuts:\n";
+  echo "  #aria   = download with aria2c\n";
+  echo "  #mpv    = play in mpv\n";
+  echo "  #ffplay = play in ffplay\n";
+  echo "  #echo   = echo title and direct url\n";
   exit(0);
 }
 $DEBUG = 0;
@@ -154,6 +160,7 @@ dw("Accept-URL: $aurl");
 if ($cookies != "") {
   dw("Cookies: $cookies");
 }
+$stitle = preg_replace('/\\|\/|\*|:|\"|<|>|\?|\|/', "", $title);
 if ($argc > $i+1) {
   $cstr = $argv[$i+1];
   dw("Command str parse: $cstr");
@@ -162,5 +169,23 @@ if ($argc > $i+1) {
     if ($sib == 0) {
       print "Cookie: $cookies\n";
     }
+  } 
+   elseif ($cstr == "#aria") {
+    passthru("aria2c --auto-file-renaming=false -k1M -j1 -x16 --file-allocation=none \"$durl\" -c --header \"Cookie:$cookies\" -o \"$stitle.mp4\"");
+  } elseif ($cstr == "#mpv") {
+    passthru("mpv --http-header-fields=\"Cookie:$cookies\" \"$durl\"");
+  } elseif ($cstr == "#ffplay") {
+    $fp = "ffplay -i \"$durl\"";
+    if ($sib == 0) {
+      $fp = $fp . " -headers \"Cookie: $cookies\"";
+    }
+    passthru($fp);
+  } else {
+    dw("Custom command str: $cstr");    
+    $cstr = str_replace("\$du", $durl, $cstr);
+    $cstr = str_replace("\$ti", $stitle, $cstr);
+    $cstr = str_replace("\$id", $id, $cstr);
+    $cstr = str_replace("\$aurl", $aurl, $cstr);
+    passthru($cstr);
   }
 }
