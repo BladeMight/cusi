@@ -151,7 +151,7 @@ if (sizeof($iurl) >= 2) {
 	$cookies = $cookies . " " . tocookies($hed2["Set-cookie"]);
 	dw("cookie2: $cookies");
   }
-  $myvedata = get_data($e_url, Array(CURLOPT_COOKIE => $cookies));
+  $myvedata = get_data($e_url, Array(CURLOPT_HTTPHEADER => array("Cookie:".$cookies)));
   preg_match('/<title\>(.*?)\<\/title\>/m', $myvedata, $ttg);
   $title = $ttg[1];
   // print($title);
