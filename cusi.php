@@ -122,27 +122,34 @@ if (sizeof($iurl) >= 2) {
 } else { // Not sibnet 
   $sib = 0;
   dw("Try with myvi/ourvideo.ru...");
-  preg_match('/(ourvideo.ru|myvi).*embed/', $url, $myv);
-  // print_r($myv);
-  dw("Not embed-url, try to get...");
-  $myvh = get_data($url, Array(CURLOPT_HEADER => TRUE, CURLOPT_NOBODY => TRUE));
-  $hed = headers($myvh);
-  if (array_key_exists("Set-cookie", $hed)) {
-	$cookies = tocookies($hed["Set-cookie"]);
-	dw("cookie1: $cookies");
-  }
-  if (sizeof($myv) < 2) {
-    $myvdata = get_data($url, Array(CURLOPT_HTTPHEADER => array("Cookie:".$cookies)));
-    #$cookies = "Cookie: ".str_replace("Set-Cookie: ", "", $myvhed[4]. "; ".$myvhed[7]);
-    // print($myvdata);
-    preg_match('/content="(\/\/myvi.ru\/player\/embed.*?)"/m', $myvdata, $myve);
-    $e_url = "https:".$myve[1];
-  } else { $e_url = $url; }
-  if (array_key_exists("STATUS", $hed)) {
-	if($hed["STATUS"][1] == 301) {
-	  dw("301 Moved handling.");
-	  $e_url = $hed["Location"];
-	}
+  preg_match('/(myvi\.[^\/]+).*?v=(.{26})/', $url, $mid); // check if not myvy.ru
+  if (sizeof($mid) >= 3) {
+    $id = $mid[2];
+    dw("Get id from url, make embed: $id");
+    $e_url = "https://" . $mid[1] . "/embed/" . $id;
+  } else {  
+    preg_match('/(ourvideo.ru|myvi).*embed/', $url, $myv);
+    // print_r($myv);
+    dw("Not embed-url, try to get...");
+    $myvh = get_data($url, Array(CURLOPT_HEADER => TRUE, CURLOPT_NOBODY => TRUE));
+    $hed = headers($myvh);
+    if (array_key_exists("Set-cookie", $hed)) {
+      $cookies = tocookies($hed["Set-cookie"]);
+      dw("cookie1: $cookies");
+    }
+    if (sizeof($myv) < 2) {
+      $myvdata = get_data($url, Array(CURLOPT_HTTPHEADER => array("Cookie:".$cookies)));
+      #$cookies = "Cookie: ".str_replace("Set-Cookie: ", "", $myvhed[4]. "; ".$myvhed[7]);
+      // print($myvdata);
+      preg_match('/content="(\/\/myvi.ru\/player\/embed.*?)"/m', $myvdata, $myve);
+      $e_url = "https:".$myve[1];
+    } else { $e_url = $url; }
+    if (array_key_exists("STATUS", $hed)) {
+      if($hed["STATUS"][1] == 301) {
+        dw("301 Moved handling.");
+        $e_url = $hed["Location"];
+      }
+    }
   }
   // get Unique User Id cookie
   $myvh2 = get_data($e_url, Array(CURLOPT_HEADER => TRUE, CURLOPT_NOBODY => TRUE, CURLOPT_HTTPHEADER => array("Cookie:".$cookies)));
@@ -157,10 +164,13 @@ if (sizeof($iurl) >= 2) {
   // print($title);
   preg_match('/.*?\("v=(.+?)".*/m', $myvedata, $ddg);
   $aurl = explode("&tp=", str_replace('\u0026', "&", urldecode($ddg[1])))[0];
-  preg_match('/myvi.tv\/embed/', $e_url, $myt);
+  preg_match('/myvi[^\/]+\/embed/', $e_url, $myt);
   if (sizeof($myt) >= 1) {
-	$durl = "https:".$aurl;
-	$sib = 1;
+    $durl = $aurl;
+    if (substr($durl,0,4) != "http") {
+      $durl = "https:".$durl;
+    }
+    $sib = 1;
   } else {
 	$myvhed = get_data($aurl, Array(CURLOPT_REFERER => $e_url, CURLOPT_HEADER => TRUE, CURLOPT_NOBODY => TRUE, CURLOPT_HTTPHEADER => array("Cookie:".$cookies)));
 	$durl = headers($myvhed)["Location"];
