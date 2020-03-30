@@ -96,6 +96,7 @@ function tocookies($setcookies) {
 $url = $argv[$i];
 preg_match('/video.sibnet.ru\/(?:(?:shell\.php\?videoid=)|(?:video))(\d+)/', $url, $iurl);
 $id = "";
+$sib = 1;
 // print_r($iurl);
 $cookies = ""; $e_url = ""; $title = ""; $durl = ""; $aurl = ""; 
 if (sizeof($iurl) >= 2) {
@@ -113,6 +114,7 @@ if (sizeof($iurl) >= 2) {
   $durl = "https:".$hed["Location"];
 
 } else { // Not sibnet 
+  $sib = 0;
   dw("Try with myvi/ourvideo.ru...");
   preg_match('/(ourvideo.ru|myvi).*embed/', $url, $myv);
   // print_r($myv);
@@ -156,5 +158,8 @@ if ($argc > $i+1) {
   dw("Command str parse: $cstr");
   if ($cstr == "#echo") {
     print "$title\n$durl\n";
+    if ($sib == 0) {
+      print "Cookie: $cookies\n";
+    }
   }
 }
