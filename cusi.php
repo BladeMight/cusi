@@ -81,6 +81,7 @@ function headers($raw) {
     if ($line == null || trim($line[0]) == "") {
       continue;
     }
+    if(substr($line, 0, 1) == "<") { break; }
     dw("Header-Line: $line");
     list($k, $v) = explode(":", $line, 2);
     $xk = ucfirst(strtolower($k));
@@ -155,8 +156,8 @@ if (sizeof($iurl) >= 2) {
   $myvh2 = get_data($e_url, Array(CURLOPT_HEADER => TRUE, CURLOPT_NOBODY => TRUE, CURLOPT_HTTPHEADER => array("Cookie:".$cookies)));
   $hed2 = headers($myvh2);
   if (array_key_exists("Set-cookie", $hed2)) {
-	$cookies = $cookies . " " . tocookies($hed2["Set-cookie"]);
-	dw("cookie2: $cookies");
+    $cookies = $cookies . " " . tocookies($hed2["Set-cookie"]);
+    dw("cookie2: $cookies");
   }
   $myvedata = get_data($e_url, Array(CURLOPT_HTTPHEADER => array("Cookie:".$cookies)));
   preg_match('/<title\>(.*?)\<\/title\>/m', $myvedata, $ttg);
@@ -171,10 +172,15 @@ if (sizeof($iurl) >= 2) {
       $durl = "https:".$durl;
     }
     $sib = 1;
-  } else {
-	$myvhed = get_data($aurl, Array(CURLOPT_REFERER => $e_url, CURLOPT_HEADER => TRUE, CURLOPT_NOBODY => TRUE, CURLOPT_HTTPHEADER => array("Cookie:".$cookies)));
-	$durl = headers($myvhed)["Location"];
   }
+  $myvhed = get_data($aurl, Array(CURLOPT_REFERER => $e_url, CURLOPT_HEADER => TRUE, CURLOPT_NOBODY => TRUE, CURLOPT_HTTPHEADER => array("Cookie:".$cookies)));
+  $hed3 = headers($myvhed);
+  if(!array_key_exists("Location", $hed3)) {
+    $myvhed = get_data($aurl, Array(CURLOPT_REFERER => $e_url, CURLOPT_HEADER => TRUE, CURLOPT_HTTPHEADER => array("Cookie:".$cookies)));
+  }
+  //print($myvhed);
+  $durl = headers($myvhed)["Location"];
+}
 }
 // print info, in debug mode
 dw("Title: $title");
@@ -195,7 +201,7 @@ if ($argc > $i+1) {
       print "Cookie: $cookies\n";
     }
   } 
-   elseif ($cstr == "#aria") {
+  elseif ($cstr == "#aria") {
     passthru("aria2c --auto-file-renaming=false -k1M -j1 -x16 --file-allocation=none \"$durl\" -c --header \"Cookie:$cookies\" -o \"$stitle.mp4\"");
   } elseif ($cstr == "#mpv") {
     passthru("mpv --http-header-fields=\"Cookie:$cookies\" \"$durl\"");
