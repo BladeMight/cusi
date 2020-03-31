@@ -181,7 +181,6 @@ if (sizeof($iurl) >= 2) {
   //print($myvhed);
   $durl = headers($myvhed)["Location"];
 }
-}
 // print info, in debug mode
 dw("Title: $title");
 dw("Direct-URL: $durl");
