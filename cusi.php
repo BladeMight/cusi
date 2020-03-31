@@ -94,7 +94,7 @@ function headers($raw) {
   return $headers;
 }
 function tocookies($setcookies) {
-  $m = preg_replace('/(expires|path|domain|SameSite)=.*?;|\shttponly(;|\s|$)|\spath=[^;]*;?/i', '', $setcookies);
+  $m = preg_replace('/(expires|path|domain|samesite)=.*?;|\s(httponly|secure|samesite=none)(;|\s|$)|\spath=[^;]*;?/i', '', $setcookies);
   $n = preg_replace('/;\s+/', '; ', $m);
   return $n;
 }
